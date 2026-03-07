@@ -1181,6 +1181,30 @@ QByteArray iconMaskValuePng(QString filepath) {
 	return result;
 }
 
+bool hasOverridePngScales(const QString &filePath) {
+	auto overridePath = filePath;
+	auto iconsIdx = overridePath.lastIndexOf(QLatin1String("/icons/"));
+	if (iconsIdx < 0) {
+		return false;
+	}
+	overridePath.replace(iconsIdx, 7, QLatin1String("/fa/micons/"));
+	QFileInfo info(overridePath);
+	auto base = info.dir().filePath(info.fileName().split('-')[0]);
+	return QFile::exists(base + ".png")
+		&& QFile::exists(base + "@2x.png")
+		&& QFile::exists(base + "@3x.png");
+}
+
+QByteArray overrideIconMaskPng(const QString &filePath) {
+	auto overridePath = filePath;
+	auto iconsIdx = overridePath.lastIndexOf(QLatin1String("/icons/"));
+	if (iconsIdx < 0) {
+		return {};
+	}
+	overridePath.replace(iconsIdx, 7, QLatin1String("/fa/micons/"));
+	return iconMaskValuePng(overridePath);
+}
+
 } // namespace
 
 bool Generator::writeIconValues() {
@@ -1208,7 +1232,17 @@ bool Generator::writeIconValues() {
 			return false;
 		}
 		source_->stream() << "const uchar iconMask" << i.value() << "Data[] = " << stringToBinaryArray(std::string(maskData.constData(), maskData.size())) << ";\n";
-		source_->stream() << "IconMask iconMask" << i.value() << "(iconMask" << i.value() << "Data);\n\n";
+		if (!filePath.startsWith("size://") && hasOverridePngScales(filePath)) {
+			auto overrideData = overrideIconMaskPng(filePath);
+			if (!overrideData.isEmpty()) {
+				source_->stream() << "const uchar iconMask" << i.value() << "OverrideData[] = " << stringToBinaryArray(std::string(overrideData.constData(), overrideData.size())) << ";\n";
+				source_->stream() << "IconMask iconMask" << i.value() << "(iconMask" << i.value() << "Data, iconMask" << i.value() << "OverrideData);\n\n";
+			} else {
+				source_->stream() << "IconMask iconMask" << i.value() << "(iconMask" << i.value() << "Data);\n\n";
+			}
+		} else {
+			source_->stream() << "IconMask iconMask" << i.value() << "(iconMask" << i.value() << "Data);\n\n";
+		}
 	}
 	return true;
 }
