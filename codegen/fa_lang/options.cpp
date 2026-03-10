@@ -25,7 +25,7 @@ using common::logError;
 Options parseOptions() {
 	auto result = Options();
 	const auto args = QCoreApplication::instance()->arguments();
-	for (auto i = 1, count = args.size(); i < count; ++i) {
+	for (int i = 1, count = args.size(); i < count; ++i) {
 		const auto &arg = args.at(i);
 
 		if (arg == "-o") {
