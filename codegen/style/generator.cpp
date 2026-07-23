@@ -1121,6 +1121,9 @@ QByteArray iconMaskValuePng(QString filepath) {
 	auto directory = fileInfo.dir();
 	auto nameAndModifiers = fileInfo.fileName().split('-');
 	filepath = directory.filePath(nameAndModifiers[0]);
+	if (filepath.endsWith(".svg") || filepath.endsWith(".png")) {
+		filepath.chop(4);
+	}
 	auto modifiers = nameAndModifiers.mid(1);
 
 	const auto readImage = [&](const QString &postfix) {
@@ -1184,6 +1187,7 @@ QByteArray iconMaskValuePng(QString filepath) {
 	}
 	{
 		QBuffer buffer(&result);
+		buffer.open(QIODevice::WriteOnly);
 		composed.save(&buffer, "PNG");
 	}
 	return result;
@@ -1198,6 +1202,9 @@ bool hasOverridePngScales(const QString &filePath) {
 	overridePath.replace(iconsIdx, 7, QLatin1String("/fa/micons/"));
 	QFileInfo info(overridePath);
 	auto base = info.dir().filePath(info.fileName().split('-')[0]);
+	if (base.endsWith(".svg") || base.endsWith(".png")) {
+		base.chop(4);
+	}
 	return QFile::exists(base + ".png")
 		&& QFile::exists(base + "@2x.png")
 		&& QFile::exists(base + "@3x.png");
